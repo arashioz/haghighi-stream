@@ -1,0 +1,121 @@
+.user-join-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  padding: 1rem;
+}
+
+.user-join-card {
+  width: 100%;
+  max-width: 400px;
+  background: #171717;
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid #333;
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.user-join-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #facc15;
+  text-align: center;
+}
+
+.user-join-kicked {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 10px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.user-join-subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  color: #a3a3a3;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.user-join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.user-join-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fafafa;
+}
+
+.user-join-input {
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  color: #fafafa;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.user-join-input::placeholder {
+  color: #525252;
+}
+
+.user-join-input:focus {
+  border-color: #facc15;
+  box-shadow: 0 0 0 3px #facc15cc;
+}
+
+.user-join-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #fca5a5;
+  text-align: center;
+}
+
+.user-join-btn {
+  margin-top: 0.25rem;
+  padding: 0.9rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #facc15;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.user-join-btn:hover {
+  background: #fde047;
+  transform: translateY(-1px);
+}
+
+.user-join-back {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.user-join-back a {
+  color: #facc15cc;
+}
+
+.user-join-back a:hover {
+  text-decoration: underline;
+}

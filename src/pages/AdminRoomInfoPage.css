@@ -1,0 +1,126 @@
+.admin-room-info-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  padding: 1rem;
+}
+
+.admin-room-info-card {
+  width: 100%;
+  max-width: 520px;
+  background: #171717;
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid #333;
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.admin-room-info-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #facc15;
+  text-align: center;
+}
+
+.admin-room-info-desc {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  color: #a3a3a3;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.admin-room-info-link-box {
+  margin-bottom: 1.5rem;
+}
+
+.admin-room-info-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fafafa;
+  margin-bottom: 0.5rem;
+}
+
+.admin-room-info-link-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-room-info-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #fafafa;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  direction: ltr;
+  text-align: left;
+}
+
+.admin-room-info-copy {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #facc15;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-room-info-copy:hover {
+  background: #fde047;
+}
+
+.admin-room-info-code-section {
+  margin-top: 1.25rem;
+}
+
+.admin-room-info-code-section .admin-room-info-hint {
+  margin: 0.5rem 0 0;
+}
+
+.admin-room-info-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #a3a3a3;
+}
+
+.admin-room-info-enter {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #facc15;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.admin-room-info-enter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px #facc15cc;
+}
+
+.admin-room-info-back {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.admin-room-info-back a {
+  color: #facc15cc;
+}
+
+.admin-room-info-back a:hover {
+  text-decoration: underline;
+}

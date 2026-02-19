@@ -1,0 +1,386 @@
+/* ---------- اتاق کنفرانس — حقیقی استریم (مشکی زرد) ---------- */
+.conference-room {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0a;
+}
+
+.conference-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  background: #171717;
+  border-bottom: 1px solid #333;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.conference-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.conference-logo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #facc15;
+  letter-spacing: -0.02em;
+}
+
+.conference-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #facc15;
+  letter-spacing: -0.02em;
+}
+
+.conference-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.conference-viewer-badge {
+  font-size: 0.85rem;
+  color: #facc15cc;
+  padding: 0.4rem 0.75rem;
+  background: rgba(250, 204, 21, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+}
+
+.conference-participants-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  background: #0a0a0a;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #fafafa;
+  border: 1px solid #333;
+}
+
+.conference-participants-icon {
+  font-size: 1rem;
+}
+
+.conference-participants-count {
+  font-weight: 700;
+  color: #facc15;
+}
+
+.conference-participants-label {
+  color: #a3a3a3;
+}
+
+.conference-live-badge {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #facc15;
+  border-radius: 8px;
+  box-shadow: 0 0 12px #facc15cc;
+}
+
+.conference-start-btn {
+  padding: 0.55rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #facc15;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px #facc15cc;
+}
+
+.conference-start-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px #facc15cc;
+}
+
+.conference-start-btn.is-live {
+  background: #eab308;
+  color: #0a0a0a;
+  box-shadow: 0 2px 8px #facc15cc;
+}
+
+.conference-start-btn.is-live:hover:not(:disabled) {
+  box-shadow: 0 4px 16px #facc15cc;
+}
+
+.conference-start-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.conference-user-name {
+  font-size: 0.85rem;
+  color: #a3a3a3;
+  padding: 0.4rem 0.75rem;
+  background: #0a0a0a;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+
+.conference-stream-error {
+  margin: 0;
+  max-width: 280px;
+  font-size: 0.8rem;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.15);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* لیست کاربران حاضر (برای ادمین) */
+.conference-participants-list {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  background: #171717;
+  border-bottom: 1px solid #333;
+}
+
+.conference-participants-list-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #facc15;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.conference-participants-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.conference-participants-list li {
+  font-size: 0.8rem;
+  color: #fafafa;
+  padding: 0.35rem 0.65rem;
+  background: #0a0a0a;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.conference-participant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #0a0a0a;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+
+.conference-participant-name {
+  font-size: 0.85rem;
+  color: #fafafa;
+  flex: 1;
+  min-width: 0;
+}
+
+.conference-participant-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.conference-participant-btn {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.conference-participant-btn-block {
+  color: #0a0a0a;
+  background: #facc15;
+}
+
+.conference-participant-btn-block:hover {
+  opacity: 0.9;
+}
+
+.conference-participant-btn-kick {
+  color: #fafafa;
+  background: #dc2626;
+}
+
+.conference-participant-btn-kick:hover {
+  opacity: 0.9;
+}
+
+/* ---------- بدنه: ویدیو + چت ---------- */
+.conference-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 0;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.conference-video-frame {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(250, 204, 21, 0.05);
+  overflow: hidden;
+}
+
+.conference-video-inner {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.conference-audio-unlock {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: #facc15;
+  cursor: pointer;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 12px;
+  margin: 0.5rem;
+  min-height: 120px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.conference-audio-unlock:hover,
+.conference-audio-unlock:active {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.conference-audio-unlock-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: block;
+}
+
+.conference-audio-unlock-hint {
+  font-size: 0.95rem;
+  color: rgba(250, 204, 21, 0.9);
+  display: block;
+}
+
+@media (min-width: 600px) {
+  .conference-audio-unlock-title { font-size: 1.25rem; }
+  .conference-audio-unlock-hint { font-size: 1rem; }
+}
+
+.conference-video-inner .str-video__speaker-layout__wrapper,
+.conference-video-inner .str-video__speaker-layout {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1;
+  min-height: 0;
+}
+
+.conference-video-inner .str-video__speaker-layout__spotlight {
+  flex: 1;
+  min-height: 400px;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.conference-room.conference-room--admin .conference-video-inner .str-video__speaker-layout__spotlight {
+  min-height: 60vh;
+}
+
+.conference-video-inner .str-video__participant-view {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  position: relative;
+  background: #171717;
+}
+
+.conference-video-inner .str-video__participant-view video,
+.conference-video-inner video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block;
+  background: #171717;
+}
+
+.conference-video-inner .str-video__video-placeholder,
+.conference-video-inner [class*="video-placeholder"] {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #171717;
+  color: #a3a3a3;
+}
+
+.conference-chat {
+  flex-shrink: 0;
+  width: 360px;
+  min-width: 280px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #171717;
+  border-radius: 16px;
+  border: 1px solid #333;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .conference-body {
+    flex-direction: column;
+    padding: 0.75rem;
+  }
+
+  .conference-chat {
+    width: 100%;
+    min-width: 0;
+    max-height: 40vh;
+  }
+}
