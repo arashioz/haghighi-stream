@@ -7,7 +7,7 @@ import {
   type User,
 } from '@stream-io/video-react-sdk'
 import ConferenceRoom from '../ConferenceRoom'
-import { getStreamToken, streamApiKey, streamUserId, streamCallId } from '../streamToken'
+import { getStreamToken, streamApiKey, streamCallId } from '../streamToken'
 
 function makeViewerUserId(name: string): string {
   const safe = name.trim().replace(/\s+/g, '-').slice(0, 20) || 'viewer'
