@@ -144,7 +144,7 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
               پخش زنده
             </span>
           )}
-          {(isAdmin || isOperator) && (
+          {canModerate && (
             <>
               {isAdmin && (
                 <>
