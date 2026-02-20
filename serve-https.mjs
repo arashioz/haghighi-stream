@@ -83,7 +83,8 @@ const mime = {
 // وضعیت اتاق
 let roomCode = '1234'
 const bannedUsers = new Set()
-const chatBlockedUsers = new Set()
+/** کاربران بلاک‌شدهٔ چت: نام → زمان انقضا (timestamp) */
+const chatBlockedUsers = new Map()
 const connectionMap = new Map()
 const validJoinTokens = new Map()
 
@@ -255,7 +256,8 @@ wss.on('connection', (ws) => {
         const conn = connectionMap.get(ws)
         if (conn && (conn.role === 'admin' || conn.role === 'operator')) {
           const target = (msg.targetUserName || '').trim()
-          if (target) chatBlockedUsers.add(target)
+          const minutes = Math.min(10, Math.max(1, Number(msg.blockDurationMinutes) || 1))
+          if (target) chatBlockedUsers.set(target, Date.now() + minutes * 60 * 1000)
         }
         return
       }
@@ -272,7 +274,11 @@ wss.on('connection', (ws) => {
       if (type === 'chat' || (!type && msg.userName != null)) {
         if (!connectionMap.has(ws)) return
         const userName = msg.userName || 'کاربر'
-        if (chatBlockedUsers.has(userName)) return
+        const blockExpiry = chatBlockedUsers.get(userName)
+        if (blockExpiry != null) {
+          if (Date.now() >= blockExpiry) chatBlockedUsers.delete(userName)
+          else return
+        }
         const payload = JSON.stringify({
           ...msg,
           type: 'chat',

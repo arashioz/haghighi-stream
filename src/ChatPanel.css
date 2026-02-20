@@ -60,6 +60,13 @@
   line-height: 1.5;
 }
 
+.chat-panel-retry-hint {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #a3a3a3;
+  line-height: 1.5;
+}
+
 .chat-message {
   max-width: 90%;
   padding: 0.65rem 0.9rem;

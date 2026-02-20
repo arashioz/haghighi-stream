@@ -31,6 +31,12 @@ const UserJoinPage = () => {
       })
       const data = (await res.json()) as { allowed?: boolean; reason?: string; joinToken?: string }
       if (data.allowed) {
+        if (data.joinToken) {
+          try {
+            sessionStorage.setItem('stream_join_token', data.joinToken)
+            sessionStorage.setItem('stream_join_userName', userName)
+          } catch (_) {}
+        }
         navigate('/watch', { state: { userName, joinToken: data.joinToken } })
       } else if (data.reason === 'banned') {
         setError('شما اجازهٔ ورود به این اتاق را ندارید.')

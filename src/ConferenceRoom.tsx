@@ -1,6 +1,8 @@
 import { useState, useLayoutEffect, useCallback } from 'react'
 import { CallingState } from '@stream-io/video-client'
 import {
+  hasVideo,
+  ParticipantView,
   SpeakerLayout,
   useCall,
   useCallStateHooks,
@@ -29,20 +31,21 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
     onKicked,
     joinToken,
   })
-  const { useParticipants, useCameraState, useCallCallingState } = useCallStateHooks()
+  const { useParticipants, useCameraState, useCallCallingState, useCallStatsReport } = useCallStateHooks()
   const participants = useParticipants()
   const { isMute: isCameraMute } = useCameraState()
   const callingState = useCallCallingState()
+  const callStatsReport = useCallStatsReport()
   const count = participants.length
   const isJoined = callingState === CallingState.JOINED
   const canModerate = isAdmin || isOperator
 
-  // کاربر عادی فقط تماشا می‌کند — دسترسی دوربین/میکروفون اصلاً درخواست نشود (بلافاصله بعد از join)
+  // فقط ادمین دوربین/میکروفون دارد؛ بیننده و اپراتور بدون تصویر و صدا (اپراتور فقط بلاک موقت چت و اخراج)
   useLayoutEffect(() => {
-    if (isAdmin || isOperator || !call || !isJoined) return
+    if (isAdmin || !call || !isJoined) return
     call.camera.disable().catch(() => {})
     call.microphone.disable().catch(() => {})
-  }, [isAdmin, isOperator, call, isJoined])
+  }, [isAdmin, call, isJoined])
 
   // باز کردن قفل پخش صدا در مرورگر (برای بیننده) با اولین کلیک/لمس — ضروری برای اندروید و iOS
   const [audioUnlocked, setAudioUnlocked] = useState(false)
@@ -93,8 +96,32 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
 
   const isLive = streamStarted || !isCameraMute
 
+  const statsLine = callStatsReport && (
+    <div className="conference-stats-bar">
+      <span className="conference-stats-item" title="تأخیر">
+        📶 {callStatsReport.publisherStats?.averageRoundTripTimeInMs ?? '-'} ms
+      </span>
+      <span className="conference-stats-item" title="رزولوشن ارسال">
+        📐 {callStatsReport.publisherStats?.highestFrameWidth && callStatsReport.publisherStats?.highestFrameHeight
+          ? `${callStatsReport.publisherStats.highestFrameWidth}×${callStatsReport.publisherStats.highestFrameHeight}`
+          : '-'}
+      </span>
+      <span className="conference-stats-item" title="دیتاسنتر">
+        🌐 {callStatsReport.datacenter || '-'}
+      </span>
+      {callStatsReport.subscriberStats && (
+        <span className="conference-stats-item" title="رزولوشن دریافت">
+          📺 {callStatsReport.subscriberStats.highestFrameWidth && callStatsReport.subscriberStats.highestFrameHeight
+            ? `${callStatsReport.subscriberStats.highestFrameWidth}×${callStatsReport.subscriberStats.highestFrameHeight}`
+            : '-'}
+        </span>
+      )}
+    </div>
+  )
+
   return (
-    <div className={`conference-room ${isAdmin ? 'conference-room--admin' : ''}`}>
+    <div className={`conference-room ${isAdmin ? 'conference-room--admin' : ''} ${isOperator ? 'conference-room--operator' : ''}`}>
+      {statsLine}
       <header className="conference-header">
         <div className="conference-header-right">
           <span className="conference-logo" aria-hidden>▶</span>
@@ -150,26 +177,51 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
       </header>
 
       <div className="conference-body">
-        <div className="conference-video-frame">
-          {canModerate && participants.length > 1 && (
-            <div className="conference-participants-list">
-              <span className="conference-participants-list-title">کاربران حاضر</span>
-              <ul>
+        <div className={`conference-video-frame ${isAdmin ? 'conference-video-frame--admin' : ''} ${isOperator ? 'conference-video-frame--operator' : ''}`}>
+          {isAdmin && (
+            <div className="conference-admin-sidebar">
+              <span className="conference-admin-sidebar-title">کاربران حاضر</span>
+              <div className="conference-admin-sidebar-scroll">
                 {participants
                   .filter((p) => !p.isLocalParticipant)
                   .map((p) => {
                     const displayName = p.name || p.userId || `شرکت‌کننده ${p.sessionId.slice(0, 6)}`
+                    const participantHasVideo = hasVideo(p)
                     return (
-                      <li key={p.sessionId} className="conference-participant-row">
-                        <span className="conference-participant-name">{displayName}</span>
-                        <div className="conference-participant-actions">
+                      <div
+                        key={p.sessionId}
+                        className={`conference-admin-sidebar-item ${!participantHasVideo ? 'conference-admin-sidebar-item--no-video' : ''}`}
+                      >
+                        {participantHasVideo ? (
+                          <div className="conference-admin-sidebar-video">
+                            <ParticipantView participant={p} />
+                          </div>
+                        ) : (
+                          <div className="conference-admin-sidebar-avatar" aria-hidden>
+                            <span className="conference-admin-sidebar-avatar-inner">👤</span>
+                          </div>
+                        )}
+                        <span className="conference-admin-sidebar-name">{displayName}</span>
+                        <div className="conference-admin-sidebar-actions">
+                          <span className="conference-block-duration-label">بلاک:</span>
+                          {([1, 5, 10] as const).map((min) => (
+                            <button
+                              key={min}
+                              type="button"
+                              className="conference-participant-btn conference-participant-btn-block"
+                              onClick={() => sendCommand('block_chat', { targetUserName: displayName, blockDurationMinutes: min })}
+                              title={`بلاک موقت چت ${min} دقیقه`}
+                            >
+                              {min}د
+                            </button>
+                          ))}
                           <button
                             type="button"
-                            className="conference-participant-btn conference-participant-btn-block"
-                            onClick={() => sendCommand('block_chat', { targetUserName: displayName })}
-                            title="بلاک موقت چت"
+                            className="conference-participant-btn conference-participant-btn-unblock"
+                            onClick={() => sendCommand('unblock_chat', { targetUserName: displayName })}
+                            title="انبلاک چت"
                           >
-                            بلاک چت
+                            انبلاک
                           </button>
                           <button
                             type="button"
@@ -180,39 +232,105 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
                             اخراج
                           </button>
                         </div>
-                      </li>
+                      </div>
                     )
                   })}
-              </ul>
+                {participants.filter((p) => !p.isLocalParticipant).length === 0 && (
+                  <p className="conference-admin-sidebar-empty">هنوز کسی نیامده</p>
+                )}
+              </div>
+            </div>
+          )}
+          {isOperator && !isAdmin && (
+            <div className="conference-admin-sidebar conference-operator-sidebar">
+              <span className="conference-admin-sidebar-title">کاربران حاضر</span>
+              <div className="conference-admin-sidebar-scroll">
+                {participants
+                  .filter((p) => !p.isLocalParticipant)
+                  .map((p) => {
+                    const displayName = p.name || p.userId || `شرکت‌کننده ${p.sessionId.slice(0, 6)}`
+                    return (
+                      <div key={p.sessionId} className="conference-admin-sidebar-item conference-admin-sidebar-item--no-video">
+                        <div className="conference-admin-sidebar-avatar" aria-hidden>
+                          <span className="conference-admin-sidebar-avatar-inner">👤</span>
+                        </div>
+                        <span className="conference-admin-sidebar-name">{displayName}</span>
+                        <div className="conference-admin-sidebar-actions">
+                          <span className="conference-block-duration-label">بلاک:</span>
+                          {([1, 5, 10] as const).map((min) => (
+                            <button
+                              key={min}
+                              type="button"
+                              className="conference-participant-btn conference-participant-btn-block"
+                              onClick={() => sendCommand('block_chat', { targetUserName: displayName, blockDurationMinutes: min })}
+                              title={`بلاک موقت چت ${min} دقیقه`}
+                            >
+                              {min}د
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            className="conference-participant-btn conference-participant-btn-unblock"
+                            onClick={() => sendCommand('unblock_chat', { targetUserName: displayName })}
+                            title="انبلاک چت"
+                          >
+                            انبلاک
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                {participants.filter((p) => !p.isLocalParticipant).length === 0 && (
+                  <p className="conference-admin-sidebar-empty">هنوز کاربر دیگری نیامده</p>
+                )}
+              </div>
             </div>
           )}
           <div
-          className="conference-video-inner"
-          role="button"
-          tabIndex={0}
-          onClick={!isAdmin && !isOperator && !audioUnlocked ? handleUnlockAudio : undefined}
-          onTouchStart={!isAdmin && !isOperator && !audioUnlocked ? (e) => { e.preventDefault(); handleUnlockAudio(); } : undefined}
-          onKeyDown={(e) => {
-            if (!isAdmin && !isOperator && !audioUnlocked && (e.key === 'Enter' || e.key === ' ')) {
-              e.preventDefault()
-              handleUnlockAudio()
-            }
-          }}
-          aria-label={!audioUnlocked && !isAdmin && !isOperator ? 'کلیک یا لمس کنید تا صدا فعال شود' : undefined}
-        >
-          {!isAdmin && !isOperator && !audioUnlocked && (
-            <div
-              className="conference-audio-unlock"
-              onClick={(e) => { e.stopPropagation(); handleUnlockAudio(); }}
-              onTouchStart={(e) => { e.stopPropagation(); handleUnlockAudio(); }}
-              role="button"
-            >
-              <span className="conference-audio-unlock-title">برای شنیدن صدای ادمین</span>
-              <span className="conference-audio-unlock-hint">اینجا را لمس کنید (یا کلیک کنید)</span>
-            </div>
-          )}
-          <SpeakerLayout excludeLocalParticipant={!isAdmin} />
-        </div>
+            className="conference-video-inner"
+            role={!isAdmin && !isOperator ? 'button' : undefined}
+            tabIndex={!isAdmin && !isOperator ? 0 : undefined}
+            onClick={!isAdmin && !isOperator && !audioUnlocked ? handleUnlockAudio : undefined}
+            onTouchStart={!isAdmin && !isOperator && !audioUnlocked ? (e) => { e.preventDefault(); handleUnlockAudio(); } : undefined}
+            onKeyDown={(e) => {
+              if (!isAdmin && !isOperator && !audioUnlocked && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault()
+                handleUnlockAudio()
+              }
+            }}
+            aria-label={!audioUnlocked && !isAdmin && !isOperator ? 'کلیک یا لمس کنید تا صدا فعال شود' : undefined}
+          >
+            {!isAdmin && !isOperator && !audioUnlocked && (
+              <div
+                className="conference-audio-unlock"
+                onClick={(e) => { e.stopPropagation(); handleUnlockAudio(); }}
+                onTouchStart={(e) => { e.stopPropagation(); handleUnlockAudio(); }}
+                role="button"
+              >
+                <span className="conference-audio-unlock-title">برای شنیدن صدای ادمین</span>
+                <span className="conference-audio-unlock-hint">اینجا را لمس کنید (یا کلیک کنید)</span>
+              </div>
+            )}
+            {isAdmin ? (
+              (() => {
+                const local = participants.find((p) => p.isLocalParticipant)
+                return (
+                  <div
+                    className={`conference-admin-main-video${!local ? ' conference-admin-main-video--waiting' : ''}`}
+                    aria-label="فقط تصویر خود ادمین"
+                  >
+                    {local ? (
+                      <ParticipantView participant={local} />
+                    ) : (
+                      <span>در حال اتصال…</span>
+                    )}
+                  </div>
+                )
+              })()
+            ) : (
+              <SpeakerLayout excludeLocalParticipant={true} />
+            )}
+          </div>
         </div>
         <aside className="conference-chat">
           <ChatPanel

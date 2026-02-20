@@ -12,11 +12,18 @@ type Props = {
 
 const ChatPanel = ({ currentUserName, messages, onSend, connected = false, registerFailed = false }: Props) => {
   const [input, setInput] = useState('')
+  const [showRetryHint, setShowRetryHint] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     listRef.current?.scrollTo(0, listRef.current.scrollHeight)
   }, [messages])
+
+  useEffect(() => {
+    if (connected || registerFailed) return
+    const t = setTimeout(() => setShowRetryHint(true), 6000)
+    return () => clearTimeout(t)
+  }, [connected, registerFailed])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,11 +51,18 @@ const ChatPanel = ({ currentUserName, messages, onSend, connected = false, regis
             ورود به چت فقط بعد از ورود به اتاق با کد صحیح امکان‌پذیر است.
           </p>
         ) : messages.length === 0 ? (
-          <p className="chat-panel-empty">
-            {connected
-              ? 'هنوز پیامی ارسال نشده. اولین نفر باشید!'
-              : 'در حال اتصال به چت…'}
-          </p>
+          <>
+            <p className="chat-panel-empty">
+              {connected
+                ? 'هنوز پیامی ارسال نشده. اولین نفر باشید!'
+                : 'در حال اتصال به چت…'}
+            </p>
+            {showRetryHint && !connected && !registerFailed && (
+              <p className="chat-panel-empty chat-panel-retry-hint">
+                اگر اتصال برقرار نشد، صفحه را رفرش کنید و دوباره با کد اتاق وارد شوید.
+              </p>
+            )}
+          </>
         ) : (
           messages.map((m) => (
             <div

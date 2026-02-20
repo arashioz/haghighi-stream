@@ -17,8 +17,9 @@ function makeViewerUserId(name: string): string {
 const ViewerCallPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const userName = (location.state as { userName?: string } | null)?.userName ?? 'کاربر'
-  const joinToken = (location.state as { joinToken?: string } | null)?.joinToken
+  const state = location.state as { userName?: string; joinToken?: string } | null
+  const userName = state?.userName ?? (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('stream_join_userName') : null) ?? 'کاربر'
+  const joinToken = state?.joinToken ?? (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('stream_join_token') : null)
   const viewerUserIdRef = useRef<string | null>(null)
   if (!viewerUserIdRef.current) viewerUserIdRef.current = makeViewerUserId(userName)
   const viewerUserId = viewerUserIdRef.current
@@ -35,14 +36,17 @@ const ViewerCallPage = () => {
   }
 
   useEffect(() => {
-    if (!(location.state as { userName?: string } | null)?.userName) {
-      navigate('/join', { replace: true })
-    }
+    const hasUser = (location.state as { userName?: string } | null)?.userName || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('stream_join_userName'))
+    if (!hasUser) navigate('/join', { replace: true })
   }, [location.state, navigate])
 
   useEffect(() => {
     if (!showKickedMessage) return
     const t = setTimeout(() => {
+      try {
+        sessionStorage.removeItem('stream_join_token')
+        sessionStorage.removeItem('stream_join_userName')
+      } catch (_) {}
       navigate('/join', { state: { kicked: true }, replace: true })
     }, 2800)
     return () => clearTimeout(t)
@@ -115,7 +119,7 @@ const ViewerCallPage = () => {
             isAdmin={false}
             userName={userName}
             onKicked={handleKicked}
-            joinToken={joinToken}
+            joinToken={String(joinToken)}
           />
         </div>
       </StreamCall>

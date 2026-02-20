@@ -99,7 +99,10 @@ export function useChat(userName: string | UseChatOptions) {
   )
 
   const sendCommand = useCallback(
-    (command: 'block_chat' | 'unblock_chat' | 'kick', payload: { targetUserName: string }) => {
+    (
+      command: 'block_chat' | 'unblock_chat' | 'kick',
+      payload: { targetUserName: string; blockDurationMinutes?: number }
+    ) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: command, ...payload }))
       }

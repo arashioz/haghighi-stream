@@ -8,6 +8,25 @@
   background: #0a0a0a;
 }
 
+/* نوار اطلاعات اتصال/کیفیت (GetStream) — بالا صفحه */
+.conference-stats-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 1rem;
+  background: #0f0f0f;
+  border-bottom: 1px solid #333;
+  font-size: 0.8rem;
+  color: #a3a3a3;
+  direction: ltr;
+}
+
+.conference-stats-item {
+  white-space: nowrap;
+}
+
 .conference-header {
   flex-shrink: 0;
   display: flex;
@@ -232,6 +251,22 @@
   opacity: 0.9;
 }
 
+.conference-participant-btn-unblock {
+  color: #0a0a0a;
+  background: #22c55e;
+}
+
+.conference-participant-btn-unblock:hover {
+  opacity: 0.9;
+}
+
+.conference-block-duration-label {
+  font-size: 0.7rem;
+  color: #a3a3a3;
+  display: inline;
+  margin-inline-end: 0.35rem;
+}
+
 /* ---------- بدنه: ویدیو + چت ---------- */
 .conference-body {
   flex: 1;
@@ -253,6 +288,242 @@
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(250, 204, 21, 0.05);
   overflow: hidden;
+}
+
+/* چیدمان ادمین و اپراتور: نوار چپ (لیست کاربران عمودی + اسکرول) + ویدیوی وسط */
+.conference-video-frame--admin,
+.conference-video-frame--operator {
+  flex-direction: row;
+}
+
+.conference-admin-sidebar,
+.conference-operator-sidebar {
+  flex-shrink: 0;
+  width: 240px;
+  min-width: 200px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #171717;
+  border-left: 1px solid #333;
+  overflow: hidden;
+}
+
+.conference-operator-sidebar .conference-admin-sidebar-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.conference-admin-sidebar-title {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #facc15;
+  border-bottom: 1px solid #333;
+}
+
+.conference-admin-sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.conference-admin-sidebar-item {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  background: #0a0a0a;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+
+/* کاربران بدون دوربین: ردیف فشرده بدون قاب ویدیو بزرگ */
+.conference-admin-sidebar-item--no-video {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conference-admin-sidebar-item--no-video .conference-admin-sidebar-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.conference-admin-sidebar-item--no-video .conference-admin-sidebar-actions {
+  width: 100%;
+}
+
+.conference-admin-sidebar-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #262626;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.conference-admin-sidebar-avatar-inner {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.conference-admin-sidebar-video {
+  width: 100%;
+  aspect-ratio: 16/10;
+  min-height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #262626;
+}
+
+.conference-admin-sidebar-video .str-video__participant-view,
+.conference-admin-sidebar-video [class*="participant-view"] {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 80px;
+}
+
+.conference-admin-sidebar-video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.conference-admin-sidebar-name {
+  font-size: 0.8rem;
+  color: #fafafa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conference-admin-sidebar-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.conference-admin-sidebar-actions .conference-participant-btn {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.7rem;
+}
+
+.conference-admin-sidebar-empty {
+  margin: auto 0;
+  font-size: 0.85rem;
+  color: #525252;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* وسط صفحه ادمین: فقط تصویر ادمین با اندازه درست */
+.conference-admin-main-video {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  position: relative;
+}
+
+.conference-admin-main-video .str-video__participant-view,
+.conference-admin-main-video [class*="participant-view"] {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0 !important;
+}
+
+.conference-admin-main-video video {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain !important;
+}
+
+/* قاب placeholder در وسط فقط برای ادمین — اندازه درست */
+.conference-admin-main-video .str-video__video-placeholder,
+.conference-admin-main-video [class*="video-placeholder"] {
+  min-height: 0 !important;
+  width: 100%;
+  height: 100%;
+}
+
+.conference-admin-main-video--waiting {
+  color: #a3a3a3;
+  font-size: 1rem;
+}
+
+/* نوار اپراتور: فقط بلاک موقت چت (بدون تصویر، بدون اخراج) */
+.conference-operator-bar {
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
+  background: #171717;
+  border-bottom: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.conference-operator-bar-title {
+  font-size: 0.8rem;
+  color: #a3a3a3;
+  display: block;
+}
+
+.conference-operator-bar-scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.conference-operator-bar-item {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #0a0a0a;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.conference-operator-bar-name {
+  font-size: 0.8rem;
+  color: #fafafa;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conference-operator-bar-empty {
+  font-size: 0.85rem;
+  color: #525252;
+  padding: 0.5rem 0.75rem;
+  flex-shrink: 0;
 }
 
 .conference-video-inner {
@@ -336,11 +607,19 @@
   background: #171717;
 }
 
+/* وسط ادمین: بدون min-height تا فقط اندازه درست ادمین نمایش داده شود */
+.conference-room--admin .conference-admin-main-video .str-video__participant-view {
+  min-height: 0 !important;
+}
+
+/* ویدیوی بیننده (و ادمین): تصویر کامل بدون زوم — مخصوصاً روی موبایل */
 .conference-video-inner .str-video__participant-view video,
 .conference-video-inner video {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain !important;
   display: block;
   background: #171717;
 }
@@ -382,5 +661,14 @@
     width: 100%;
     min-width: 0;
     max-height: 40vh;
+  }
+
+  .conference-admin-sidebar {
+    width: 200px;
+    min-width: 160px;
+  }
+
+  .conference-admin-sidebar-video {
+    min-height: 60px;
   }
 }
