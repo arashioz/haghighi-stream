@@ -22,12 +22,18 @@ type UseChatOptions = {
   role?: ChatRole
   onKicked?: () => void
   joinToken?: string
+  /** ادمین/اپراتور: وقتی کاربری بلاک شد */
+  onUserBlocked?: (targetUserName: string, blockDurationMinutes: number) => void
+  /** کاربر عادی: وقتی خودش بلاک شد */
+  onBlocked?: (blockDurationMinutes: number) => void
+  /** ادمین/اپراتور: وقتی کاربری اخراج شد */
+  onUserKicked?: (targetUserName: string) => void
 }
 
 export function useChat(userName: string | UseChatOptions) {
   const opts: UseChatOptions =
     typeof userName === 'string' ? { userName } : userName
-  const { userName: name, role = 'viewer', onKicked, joinToken } = opts
+  const { userName: name, role = 'viewer', onKicked, joinToken, onUserBlocked, onBlocked, onUserKicked } = opts
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [connected, setConnected] = useState(false)
@@ -35,6 +41,12 @@ export function useChat(userName: string | UseChatOptions) {
   const wsRef = useRef<WebSocket | null>(null)
   const onKickedRef = useRef(onKicked)
   onKickedRef.current = onKicked
+  const onUserBlockedRef = useRef(onUserBlocked)
+  onUserBlockedRef.current = onUserBlocked
+  const onBlockedRef = useRef(onBlocked)
+  onBlockedRef.current = onBlocked
+  const onUserKickedRef = useRef(onUserKicked)
+  onUserKickedRef.current = onUserKicked
 
   useEffect(() => {
     setRegisterFailed(false)
@@ -62,6 +74,20 @@ export function useChat(userName: string | UseChatOptions) {
         }
         if (raw.type === 'kicked') {
           onKickedRef.current?.()
+          return
+        }
+        if (raw.type === 'blocked') {
+          onBlockedRef.current?.(Number((raw as { blockDurationMinutes?: number }).blockDurationMinutes) || 1)
+          return
+        }
+        if (raw.type === 'user_blocked') {
+          const payload = raw as { targetUserName?: string; blockDurationMinutes?: number }
+          onUserBlockedRef.current?.(payload.targetUserName || '', payload.blockDurationMinutes || 1)
+          return
+        }
+        if (raw.type === 'user_kicked') {
+          const payload = raw as { targetUserName?: string }
+          onUserKickedRef.current?.(payload.targetUserName || '')
           return
         }
         if (raw.type === 'register_failed') {

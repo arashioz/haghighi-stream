@@ -83,6 +83,8 @@ const mime = {
 // وضعیت اتاق
 let roomCode = '1234'
 const bannedUsers = new Set()
+/** IPهای بلاک‌شده (اخراج) — جلوگیری از ورود مجدد با همان IP */
+const bannedIPs = new Set()
 /** کاربران بلاک‌شدهٔ چت: نام → زمان انقضا (timestamp) */
 const chatBlockedUsers = new Map()
 const connectionMap = new Map()
@@ -165,6 +167,13 @@ const requestHandler = (req, res) => {
           const data = JSON.parse(body || '{}')
           const code = String(data.code || '').replace(/\D/g, '')
           const userName = (data.userName || '').trim() || 'کاربر'
+          const clientIP = (req.headers['x-forwarded-for'] && typeof req.headers['x-forwarded-for'] === 'string'
+            ? req.headers['x-forwarded-for'].split(',')[0].trim()
+            : null) || req.socket?.remoteAddress || ''
+          if (bannedIPs.has(clientIP)) {
+            sendJson(res, 200, { allowed: false, reason: 'banned' })
+            return
+          }
           if (bannedUsers.has(userName)) {
             sendJson(res, 200, { allowed: false, reason: 'banned' })
             return
@@ -226,7 +235,8 @@ wss.on('connection', (ws) => {
             return
           }
         }
-        connectionMap.set(ws, { userName, role })
+        const ip = ws._clientIP || ''
+        connectionMap.set(ws, { userName, role, ip })
         return
       }
 
@@ -246,7 +256,17 @@ wss.on('connection', (ws) => {
           if (target) {
             bannedUsers.add(target)
             const targetWs = findWsByUserName(target)
+            const targetConn = targetWs ? connectionMap.get(targetWs) : null
+            if (targetConn?.ip) bannedIPs.add(targetConn.ip)
             if (targetWs) targetWs.send(JSON.stringify({ type: 'kicked' }))
+            chatClients.forEach((c) => {
+              if (c.readyState === 1 && c !== targetWs) {
+                const d = connectionMap.get(c)
+                if (d && (d.role === 'admin' || d.role === 'operator')) {
+                  c.send(JSON.stringify({ type: 'user_kicked', targetUserName: target }))
+                }
+              }
+            })
           }
         }
         return
@@ -256,8 +276,22 @@ wss.on('connection', (ws) => {
         const conn = connectionMap.get(ws)
         if (conn && (conn.role === 'admin' || conn.role === 'operator')) {
           const target = (msg.targetUserName || '').trim()
-          const minutes = Math.min(10, Math.max(1, Number(msg.blockDurationMinutes) || 1))
-          if (target) chatBlockedUsers.set(target, Date.now() + minutes * 60 * 1000)
+          const minutes = Math.min(60, Math.max(1, Number(msg.blockDurationMinutes) || 1))
+          if (target) {
+            chatBlockedUsers.set(target, Date.now() + minutes * 60 * 1000)
+            const targetWs = findWsByUserName(target)
+            if (targetWs) {
+              targetWs.send(JSON.stringify({ type: 'blocked', blockDurationMinutes: minutes }))
+            }
+            chatClients.forEach((c) => {
+              if (c.readyState === 1) {
+                const d = connectionMap.get(c)
+                if (d && (d.role === 'admin' || d.role === 'operator')) {
+                  c.send(JSON.stringify({ type: 'user_blocked', targetUserName: target, blockDurationMinutes: minutes }))
+                }
+              }
+            })
+          }
         }
         return
       }
@@ -297,9 +331,16 @@ wss.on('connection', (ws) => {
   })
 })
 
+function getClientIP(req) {
+  const forwarded = req.headers['x-forwarded-for']
+  if (forwarded && typeof forwarded === 'string') return forwarded.split(',')[0].trim()
+  return req.socket?.remoteAddress || ''
+}
+
 server.on('upgrade', (req, socket, head) => {
   if (req.headers.upgrade === 'websocket') {
     wss.handleUpgrade(req, socket, head, (ws) => {
+      ws._clientIP = getClientIP(req)
       wss.emit('connection', ws, req)
     })
   } else {

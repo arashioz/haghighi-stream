@@ -1,4 +1,4 @@
-import { useState, useLayoutEffect, useCallback } from 'react'
+import { useState, useLayoutEffect, useCallback, useRef } from 'react'
 import { CallingState } from '@stream-io/video-client'
 import {
   hasVideo,
@@ -10,6 +10,8 @@ import {
 import ChatPanel from './ChatPanel'
 import { useChat, type ChatRole } from './useChat'
 import './ConferenceRoom.css'
+
+type NotificationItem = { id: string; text: string; type: 'info' | 'success' | 'warn' }
 
 type Props = {
   isAdmin: boolean
@@ -24,12 +26,41 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
   const [streamStarted, setStreamStarted] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
   const [streamError, setStreamError] = useState<string | null>(null)
+  const [blockedUserNames, setBlockedUserNames] = useState<Set<string>>(new Set())
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const notificationTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const [blockModal, setBlockModal] = useState<{ open: boolean; targetUserName: string; durationInput: string }>({
+    open: false,
+    targetUserName: '',
+    durationInput: '5',
+  })
+
+  const addNotification = useCallback((text: string, type: NotificationItem['type'] = 'info', autoHideMs = 4000) => {
+    const id = `n-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    setNotifications((prev) => [...prev, { id, text, type }])
+    const t = setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id))
+      delete notificationTimeoutRef.current[id]
+    }, autoHideMs)
+    notificationTimeoutRef.current[id] = t
+  }, [])
+
   const chatRole: ChatRole = isAdmin ? 'admin' : isOperator ? 'operator' : 'viewer'
   const { messages, send, connected, sendCommand, registerFailed } = useChat({
     userName,
     role: chatRole,
     onKicked,
     joinToken,
+    onUserBlocked: useCallback((targetUserName: string, blockDurationMinutes: number) => {
+      setBlockedUserNames((prev) => new Set(prev).add(targetUserName))
+      addNotification(`${targetUserName} بلاک شد (${blockDurationMinutes} دقیقه)`, 'success')
+    }, [addNotification]),
+    onBlocked: useCallback((blockDurationMinutes: number) => {
+      addNotification(`شما بلاک شدید. تا ${blockDurationMinutes} دقیقه امکان ارسال پیام ندارید.`, 'warn', 6000)
+    }, [addNotification]),
+    onUserKicked: useCallback((targetUserName: string) => {
+      addNotification(`${targetUserName} اخراج شد`, 'info')
+    }, [addNotification]),
   })
   const { useParticipants, useCameraState, useCallCallingState, useCallStatsReport } = useCallStateHooks()
   const participants = useParticipants()
@@ -96,32 +127,77 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
 
   const isLive = streamStarted || !isCameraMute
 
-  const statsLine = callStatsReport && (
+  const pingMs = callStatsReport?.publisherStats?.averageRoundTripTimeInMs ?? null
+  const datacenter = callStatsReport?.datacenter ?? null
+  const statsLine = (pingMs != null || datacenter) && (
     <div className="conference-stats-bar">
-      <span className="conference-stats-item" title="تأخیر">
-        📶 {callStatsReport.publisherStats?.averageRoundTripTimeInMs ?? '-'} ms
+      <span className="conference-stats-ping" title="پینگ / تأخیر">
+        <span className="conference-stats-ping-icon" aria-hidden>📶</span>
+        <span className="conference-stats-ping-label">پینگ</span>
+        <span className="conference-stats-ping-value">{pingMs != null ? `${pingMs} ms` : '—'}</span>
       </span>
-      <span className="conference-stats-item" title="رزولوشن ارسال">
-        📐 {callStatsReport.publisherStats?.highestFrameWidth && callStatsReport.publisherStats?.highestFrameHeight
-          ? `${callStatsReport.publisherStats.highestFrameWidth}×${callStatsReport.publisherStats.highestFrameHeight}`
-          : '-'}
+      <span className="conference-stats-server" title="سرور / دیتاسنتر">
+        <span className="conference-stats-server-icon" aria-hidden>🌐</span>
+        <span className="conference-stats-server-label">سرور</span>
+        <span className="conference-stats-server-value">{datacenter || '—'}</span>
       </span>
-      <span className="conference-stats-item" title="دیتاسنتر">
-        🌐 {callStatsReport.datacenter || '-'}
-      </span>
-      {callStatsReport.subscriberStats && (
-        <span className="conference-stats-item" title="رزولوشن دریافت">
-          📺 {callStatsReport.subscriberStats.highestFrameWidth && callStatsReport.subscriberStats.highestFrameHeight
-            ? `${callStatsReport.subscriberStats.highestFrameWidth}×${callStatsReport.subscriberStats.highestFrameHeight}`
-            : '-'}
-        </span>
-      )}
     </div>
   )
+
+  const openBlockModal = (targetUserName: string) => {
+    setBlockModal({ open: true, targetUserName, durationInput: '5' })
+  }
+  const closeBlockModal = () => {
+    setBlockModal((m) => ({ ...m, open: false }))
+  }
+  const confirmBlock = () => {
+    const min = Math.min(60, Math.max(1, parseInt(blockModal.durationInput, 10) || 5))
+    sendCommand('block_chat', { targetUserName: blockModal.targetUserName, blockDurationMinutes: min })
+    closeBlockModal()
+  }
 
   return (
     <div className={`conference-room ${isAdmin ? 'conference-room--admin' : ''} ${isOperator ? 'conference-room--operator' : ''}`}>
       {statsLine}
+      {notifications.length > 0 && (
+        <div className="conference-notifications" role="region" aria-label="اعلان‌ها">
+          {notifications.map((n) => (
+            <div key={n.id} className={`conference-notification conference-notification--${n.type}`} role="alert">
+              {n.text}
+            </div>
+          ))}
+        </div>
+      )}
+      {blockModal.open && (
+        <div className="conference-modal-backdrop" onClick={closeBlockModal} role="presentation">
+          <div className="conference-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="block-modal-title">
+            <h2 id="block-modal-title" className="conference-modal-title">بلاک چت</h2>
+            <p className="conference-modal-desc">
+              <strong>{blockModal.targetUserName}</strong> برای چند دقیقه از ارسال پیام محروم شود؟
+            </p>
+            <div className="conference-modal-field">
+              <label htmlFor="block-duration">دقیقه (۱ تا ۶۰)</label>
+              <input
+                id="block-duration"
+                type="number"
+                min={1}
+                max={60}
+                value={blockModal.durationInput}
+                onChange={(e) => setBlockModal((m) => ({ ...m, durationInput: e.target.value }))}
+                className="conference-modal-input"
+              />
+            </div>
+            <div className="conference-modal-actions">
+              <button type="button" className="conference-modal-btn conference-modal-btn--cancel" onClick={closeBlockModal}>
+                انصراف
+              </button>
+              <button type="button" className="conference-modal-btn conference-modal-btn--confirm" onClick={confirmBlock}>
+                بلاک
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="conference-header">
         <div className="conference-header-right">
           <span className="conference-logo" aria-hidden>▶</span>
@@ -187,10 +263,11 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
                   .map((p) => {
                     const displayName = p.name || p.userId || `شرکت‌کننده ${p.sessionId.slice(0, 6)}`
                     const participantHasVideo = hasVideo(p)
+                    const isBlocked = blockedUserNames.has(displayName)
                     return (
                       <div
                         key={p.sessionId}
-                        className={`conference-admin-sidebar-item ${!participantHasVideo ? 'conference-admin-sidebar-item--no-video' : ''}`}
+                        className={`conference-admin-sidebar-item ${!participantHasVideo ? 'conference-admin-sidebar-item--no-video' : ''} ${isBlocked ? 'conference-admin-sidebar-item--blocked' : ''}`}
                       >
                         {participantHasVideo ? (
                           <div className="conference-admin-sidebar-video">
@@ -203,18 +280,14 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
                         )}
                         <span className="conference-admin-sidebar-name">{displayName}</span>
                         <div className="conference-admin-sidebar-actions">
-                          <span className="conference-block-duration-label">بلاک:</span>
-                          {([1, 5, 10] as const).map((min) => (
-                            <button
-                              key={min}
-                              type="button"
-                              className="conference-participant-btn conference-participant-btn-block"
-                              onClick={() => sendCommand('block_chat', { targetUserName: displayName, blockDurationMinutes: min })}
-                              title={`بلاک موقت چت ${min} دقیقه`}
-                            >
-                              {min}د
-                            </button>
-                          ))}
+                          <button
+                            type="button"
+                            className="conference-participant-btn conference-participant-btn-block"
+                            onClick={() => openBlockModal(displayName)}
+                            title="بلاک موقت چت"
+                          >
+                            بلاک
+                          </button>
                           <button
                             type="button"
                             className="conference-participant-btn conference-participant-btn-unblock"
@@ -227,7 +300,7 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
                             type="button"
                             className="conference-participant-btn conference-participant-btn-kick"
                             onClick={() => sendCommand('kick', { targetUserName: displayName })}
-                            title="اخراج از اتاق"
+                            title="اخراج از اتاق (IP در بلاک‌لیست)"
                           >
                             اخراج
                           </button>
@@ -249,25 +322,22 @@ const ConferenceRoom = ({ isAdmin, isOperator = false, userName, onKicked, joinT
                   .filter((p) => !p.isLocalParticipant)
                   .map((p) => {
                     const displayName = p.name || p.userId || `شرکت‌کننده ${p.sessionId.slice(0, 6)}`
+                    const isBlocked = blockedUserNames.has(displayName)
                     return (
-                      <div key={p.sessionId} className="conference-admin-sidebar-item conference-admin-sidebar-item--no-video">
+                      <div key={p.sessionId} className={`conference-admin-sidebar-item conference-admin-sidebar-item--no-video ${isBlocked ? 'conference-admin-sidebar-item--blocked' : ''}`}>
                         <div className="conference-admin-sidebar-avatar" aria-hidden>
                           <span className="conference-admin-sidebar-avatar-inner">👤</span>
                         </div>
                         <span className="conference-admin-sidebar-name">{displayName}</span>
                         <div className="conference-admin-sidebar-actions">
-                          <span className="conference-block-duration-label">بلاک:</span>
-                          {([1, 5, 10] as const).map((min) => (
-                            <button
-                              key={min}
-                              type="button"
-                              className="conference-participant-btn conference-participant-btn-block"
-                              onClick={() => sendCommand('block_chat', { targetUserName: displayName, blockDurationMinutes: min })}
-                              title={`بلاک موقت چت ${min} دقیقه`}
-                            >
-                              {min}د
-                            </button>
-                          ))}
+                          <button
+                            type="button"
+                            className="conference-participant-btn conference-participant-btn-block"
+                            onClick={() => openBlockModal(displayName)}
+                            title="بلاک موقت چت"
+                          >
+                            بلاک
+                          </button>
                           <button
                             type="button"
                             className="conference-participant-btn conference-participant-btn-unblock"
